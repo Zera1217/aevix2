@@ -70,7 +70,7 @@ app.use(session({
   cookie: { httpOnly: true, sameSite: "lax", maxAge: 1000 * 60 * 60 * 24 * 7 }
 }));
 app.use("/uploads", express.static(UPLOADS));
-app.use(express.static(path.join(ROOT, "public")));
+app.use(express.static(ROOT));
 
 const storage = multer.diskStorage({
   destination: (_, __, cb) => cb(null, UPLOADS),
@@ -282,8 +282,8 @@ app.get("/api/profile/:username", (req, res) => {
   res.json(user);
 });
 
-app.get('/', (req, res) => {
-  res.sendFile(path.join(ROOT, "public", "index.html"));
+app.get("/", (req, res) => {
+  res.sendFile(path.join(ROOT, "index.html"));
 });
 
 app.get('/*splat', (req, res) => {
