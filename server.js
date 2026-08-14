@@ -288,6 +288,7 @@ app.get("/", (req, res) => {
 
 app.get('/*splat', (req, res) => {
 res.sendFile(path.join(ROOT, "index.html"));
+});
 
 app.use((err, req, res, next) => {
   console.error(err);
