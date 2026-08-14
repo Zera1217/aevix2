@@ -282,6 +282,10 @@ app.get("/api/profile/:username", (req, res) => {
   res.json(user);
 });
 
+app.get('/', (req, res) => {
+  res.sendFile(path.join(ROOT, "public", "index.html"));
+});
+
 app.get('/*splat', (req, res) => {
   res.sendFile(path.join(ROOT, "public", "index.html"));
 });
