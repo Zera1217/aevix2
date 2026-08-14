@@ -67,13 +67,10 @@ function authPage() {
       <div class="field"><label>E-POSTA</label><input id="email" type="email" required></div>
       <div class="field"><label>ŞİFRE</label><input id="password" type="password" required></div>
       <button class="primary">Giriş Yap</button>
-      <button type="button" class="link-btn" id="forgot">Şifrenizi mi unuttunuz?</button>`
-    : `
-      <div class="field"><label>E-POSTA</label><input id="email" type="email" required></div>
-      <div class="field"><label>KULLANICI ADI</label><input id="username" required maxlength="24"></div>
-      <div class="field"><label>ŞİFRE</label><input id="password" type="password" required></div>
-      <div class="field"><label>ŞİFRE DOĞRULA</label><input id="passwordConfirm" type="password" required></div>
-      <button class="primary">Kayıt Ol</button>`;
+      <button type="button" class="link-btn" id="forgot">Şifrenizi mi unuttunuz?</<div class="field"><label>E-POSTA</label><input id="email" name="email" type="email" required></div>
+<div class="field"><label>KULLANICI ADI</label><input id="username" name="username" required maxlength="24"></div>
+<div class="field"><label>ŞİFRE</label><input id="password" name="password" type="password" required></div>
+<div class="field"><label>ŞİFRE DOĞRULA</label><input id="passwordConfirm" name="passwordConfirm" type="password" required></div>
     if(document.querySelector("#forgot")) document.querySelector("#forgot").onclick=resetPage;
   }
   document.querySelector("#loginTab").onclick=()=>{mode="login";draw()};
