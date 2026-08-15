@@ -865,6 +865,29 @@ function uploadBox(type, title, description) {
           type="file"
           accept="${accept}"
         >
+        <span class="upload-check">✓</span>
+      </label>
+
+    </div>
+  `;
+}
+
+  return `
+    <div class="upload-box">
+
+      <div>
+        <strong>${title}</strong>
+        <p>${description}</p>
+      </div>
+
+      <label class="upload-button">
+        Dosya seç
+        <input
+          class="upload-input"
+          data-type="${type}"
+          type="file"
+          accept="${accept}"
+        >
       </label>
 
     </div>
