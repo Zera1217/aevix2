@@ -1,3 +1,5 @@
+console.log("AEVIX APP.JS ÇALIŞTI");
+alert("AEVIX JS ÇALIŞTI");
 const app = document.getElementById("app");
 const bg = document.getElementById("bg");
 
