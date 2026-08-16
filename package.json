@@ -1,20 +1,20 @@
 {
   "name": "aevix",
-  "version": "1.0.0",
-  "private": true,
-  "description": "AEVIX personal bio/profile platform",
+  "version": "2.0.0",
+  "description": "AEVIX digital identity platform",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node --watch server.js"
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=20"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",
-    "pg": "^8.16.3",
-    "connect-pg-simple": "^10.0.0",
     "express": "^5.1.0",
     "express-session": "^1.18.2",
     "multer": "^2.0.2",
-    "nodemailer": "^7.0.6"
+    "nodemailer": "^7.0.6",
+    "pg": "^8.16.3"
   }
 }
