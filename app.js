@@ -1,101 +1,199 @@
-console.log("AEVIX APP.JS ÇALIŞTI");
-alert("AEVIX JS ÇALIŞTI");
 const app = document.getElementById("app");
 const bg = document.getElementById("bg");
 
-const esc = (s) =>
-  String(s ?? "").replace(/[&<>"']/g, (c) => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#039;"
-  }[c]));
+const esc = (value) =>
+  String(value ?? "").replace(
+    /[&<>"']/g,
+    (char) => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#039;"
+    })[char]
+  );
+
 
 async function api(url, options = {}) {
-  const r = await fetch(url, options);
-  const data = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(data.error || "Bir hata oluştu.");
+
+  const response =
+    await fetch(url, options);
+
+  const data =
+    await response
+      .json()
+      .catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(
+      data.error ||
+      "Bir hata oluştu."
+    );
+  }
+
   return data;
 }
 
+
 function json(method, body) {
+
   return {
     method,
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body)
+
+    headers: {
+      "Content-Type":
+        "application/json"
+    },
+
+    body:
+      JSON.stringify(body)
   };
 }
 
-function setBackground(media) {
+
+/* =========================
+   BACKGROUND
+========================= */
+
+function setBackground(
+  url,
+  type
+) {
+
   bg.innerHTML = "";
-  bg.style.backgroundImage = "";
+  bg.className = "";
 
-  if (!media || !media.url) return;
+  if (!url) {
+    return;
+  }
 
-  if (media.type === "video") {
-    const video = document.createElement("video");
-    video.src = media.url;
+  if (type === "video") {
+
+    const video =
+      document.createElement(
+        "video"
+      );
+
+    video.className =
+      "background-video";
+
+    video.src = url;
+
     video.autoplay = true;
     video.loop = true;
     video.muted = true;
     video.playsInline = true;
+
+    video.setAttribute(
+      "playsinline",
+      ""
+    );
+
+    video.setAttribute(
+      "webkit-playsinline",
+      ""
+    );
+
+    video.preload = "auto";
+
     bg.appendChild(video);
+
+    video.play().catch(() => {});
+
   } else {
-    bg.style.backgroundImage = `url("${media.url}")`;
+
+    bg.style.backgroundImage =
+      `url("${url}")`;
   }
 }
+
 
 /* =========================
    ROUTER
 ========================= */
 
 async function route() {
-  const path = location.pathname;
 
-  if (path.startsWith("/p/")) {
-    return profilePage(decodeURIComponent(path.slice(3)));
+  const path =
+    location.pathname;
+
+  if (
+    path === "/" ||
+    path === ""
+  ) {
+
+    try {
+
+      await api("/api/me");
+
+      dashboard();
+
+    } catch {
+
+      home();
+    }
+
+    return;
   }
 
-  if (path !== "/" && path !== "") {
-    return profilePage(decodeURIComponent(path.slice(1)));
-  }
+  const username =
+    decodeURIComponent(
+      path.startsWith("/p/")
+        ? path.slice(3)
+        : path.slice(1)
+    );
 
-  try {
-    await api("/api/me");
-    return dashboard();
-  } catch {
-    return home();
-  }
+  profilePage(username);
 }
+
 
 /* =========================
    HOME
 ========================= */
 
 function home() {
-  setBackground(null);
+
+  setBackground(
+    null,
+    null
+  );
 
   app.innerHTML = `
+
     <div class="home">
 
       <nav class="nav">
+
         <div class="logo">
           <span class="logo-mark">A</span>
-          <span>AEVIX</span>
+          AEVIX
         </div>
 
         <div class="nav-actions">
-          <button class="nav-link" id="loginBtn">Giriş yap</button>
-          <button class="nav-cta" id="createBtn">Profil oluştur</button>
+
+          <button
+            class="nav-link"
+            id="loginBtn">
+            Giriş yap
+          </button>
+
+          <button
+            class="nav-cta"
+            id="createBtn">
+            Profil oluştur
+          </button>
+
         </div>
+
       </nav>
+
 
       <main class="landing">
 
-        <section class="hero-section">
+        <section class="hero">
 
           <div class="hero-copy">
+
             <div class="eyebrow">
               <span></span>
               YOUR DIGITAL SPACE
@@ -107,46 +205,53 @@ function home() {
             </h1>
 
             <p>
-              AEVIX ile sosyal hesaplarını, bağlantılarını,
-              müziklerini ve dijital kimliğini tek bir profilde birleştir.
+              Sosyal hesaplarını,
+              bağlantılarını,
+              müziğini ve dijital
+              kimliğini tek bir
+              AEVIX profilinde
+              birleştir.
             </p>
 
             <div class="hero-buttons">
-              <button class="big-button" id="heroCreate">
+
+              <button
+                class="big-button"
+                id="heroCreate">
                 Profilimi oluştur
                 <span>→</span>
               </button>
 
-              <button class="ghost-button" id="heroLogin">
+              <button
+                class="ghost-button"
+                id="heroLogin">
                 Zaten hesabım var
               </button>
+
             </div>
 
             <div class="mini-info">
-              <div class="mini-dot"></div>
-              Ücretsiz profil · Kişiselleştirilebilir · AEVIX
+              <span></span>
+              Ücretsiz · Kişiselleştirilebilir · AEVIX
             </div>
+
           </div>
 
-          <div class="profile-preview">
 
-            <div class="preview-glow"></div>
+          <div class="preview-wrap">
 
             <div class="preview-card">
 
-              <div class="preview-top">
-                <div class="preview-avatar">Z</div>
-
-                <div>
-                  <div class="preview-name">yourname</div>
-                  <div class="preview-handle">@yourname</div>
-                </div>
-
-                <div class="preview-menu">•••</div>
+              <div class="preview-avatar">
+                Z
               </div>
 
-              <p class="preview-description">
-                Welcome to my corner of the internet.
+              <h3>
+                @yourname
+              </h3>
+
+              <p>
+                Welcome to my digital space.
               </p>
 
               <div class="preview-tags">
@@ -159,20 +264,21 @@ function home() {
                 <div>◎ Instagram <b>↗</b></div>
                 <div>◉ Discord <b>↗</b></div>
                 <div>♪ Spotify <b>↗</b></div>
-                <div>◆ My Website <b>↗</b></div>
+                <div>◆ Website <b>↗</b></div>
               </div>
 
-              <div class="preview-footer">
-                <span>AEVIX</span>
-                <span>digital identity</span>
-              </div>
+              <small>
+                AEVIX · digital identity
+              </small>
 
             </div>
+
           </div>
 
         </section>
 
-        <section class="feature-section">
+
+        <section class="features-section">
 
           <div class="section-title">
             <span>WHY AEVIX</span>
@@ -182,29 +288,28 @@ function home() {
           <div class="features">
 
             <article>
-              <div class="feature-number">01</div>
+              <strong>01</strong>
               <h3>Kendi alanın</h3>
               <p>
-                Sana ait bir profil oluştur ve istediğin şekilde
-                kişiselleştir.
+                Sana ait bir dijital profil.
               </p>
             </article>
 
             <article>
-              <div class="feature-number">02</div>
+              <strong>02</strong>
               <h3>Her şey tek yerde</h3>
               <p>
-                Sosyal medya hesaplarını, uygulamalarını ve
-                bağlantılarını tek profilde topla.
+                Linklerin, sosyal hesapların
+                ve içeriklerin.
               </p>
             </article>
 
             <article>
-              <div class="feature-number">03</div>
+              <strong>03</strong>
               <h3>Senin tarzın</h3>
               <p>
-                Tema renginden arka plana, avatarından müziğine
-                kadar profilini kendin tasarla.
+                Avatarından arka planına
+                kadar tamamen sen.
               </p>
             </article>
 
@@ -212,247 +317,386 @@ function home() {
 
         </section>
 
+
         <section class="final-section">
+
           <span>READY?</span>
-          <h2>Dijital kimliğini<br>şimdi oluştur.</h2>
-          <button class="big-button" id="bottomCreate">
-            AEVIX'e katıl
-            <span>→</span>
+
+          <h2>
+            Dijital kimliğini
+            şimdi oluştur.
+          </h2>
+
+          <button
+            class="big-button"
+            id="bottomCreate">
+            AEVIX'e katıl →
           </button>
+
         </section>
 
         <footer>
-          <div>AEVIX</div>
-          <span>your space on the internet.</span>
+          AEVIX
+          <span>
+            your space on the internet.
+          </span>
         </footer>
 
       </main>
+
     </div>
   `;
 
-  document.querySelector("#createBtn").onclick = authPage;
-  document.querySelector("#heroCreate").onclick = authPage;
-  document.querySelector("#bottomCreate").onclick = authPage;
-  document.querySelector("#loginBtn").onclick = authPage;
-  document.querySelector("#heroLogin").onclick = authPage;
+
+  document.getElementById(
+    "createBtn"
+  ).onclick = authPage;
+
+  document.getElementById(
+    "heroCreate"
+  ).onclick = authPage;
+
+  document.getElementById(
+    "bottomCreate"
+  ).onclick = authPage;
+
+  document.getElementById(
+    "loginBtn"
+  ).onclick = authPage;
+
+  document.getElementById(
+    "heroLogin"
+  ).onclick = authPage;
 }
+
 
 /* =========================
    AUTH
 ========================= */
 
 function authPage() {
-  setBackground(null);
+
+  setBackground(
+    null,
+    null
+  );
 
   app.innerHTML = `
+
     <div class="auth-screen">
 
-      <button class="back-button" id="backHome">← Ana sayfa</button>
+      <button
+        class="back-button"
+        id="backHome">
+        ← Ana sayfa
+      </button>
 
       <div class="auth-panel">
 
         <div class="auth-logo">
-          <span>A</span> AEVIX
+          <span>A</span>
+          AEVIX
         </div>
 
         <div class="auth-heading">
-          <div class="auth-eyebrow">AEVIX ACCOUNT</div>
-          <h1 id="authTitle">Tekrar hoş geldin.</h1>
+
+          <span>
+            AEVIX ACCOUNT
+          </span>
+
+          <h1 id="authTitle">
+            Tekrar hoş geldin.
+          </h1>
+
           <p id="authSubtitle">
-            Hesabına giriş yap ve profilini yönet.
+            Hesabına giriş yap.
           </p>
+
         </div>
 
+
         <div class="auth-tabs">
-          <button class="auth-tab active" id="loginTab">
+
+          <button
+            id="loginTab"
+            class="auth-tab active">
             Giriş
           </button>
 
-          <button class="auth-tab" id="registerTab">
+          <button
+            id="registerTab"
+            class="auth-tab">
             Kayıt
           </button>
+
         </div>
+
 
         <form id="authForm"></form>
 
         <div id="authError"></div>
 
       </div>
+
     </div>
   `;
 
+
   let mode = "login";
 
-  const form = document.querySelector("#authForm");
-  const error = document.querySelector("#authError");
+  const form =
+    document.getElementById(
+      "authForm"
+    );
 
-  document.querySelector("#backHome").onclick = () => {
-    history.pushState({}, "", "/");
-    home();
-  };
+  const error =
+    document.getElementById(
+      "authError"
+    );
+
 
   function draw() {
-    const login = mode === "login";
 
-    document.querySelector("#loginTab").classList.toggle("active", login);
-    document.querySelector("#registerTab").classList.toggle("active", !login);
+    const login =
+      mode === "login";
 
-    document.querySelector("#authTitle").textContent =
-      login ? "Tekrar hoş geldin." : "AEVIX'e katıl.";
 
-    document.querySelector("#authSubtitle").textContent =
+    document.getElementById(
+      "loginTab"
+    ).classList.toggle(
+      "active",
+      login
+    );
+
+
+    document.getElementById(
+      "registerTab"
+    ).classList.toggle(
+      "active",
+      !login
+    );
+
+
+    document.getElementById(
+      "authTitle"
+    ).textContent =
+      login
+        ? "Tekrar hoş geldin."
+        : "AEVIX'e katıl.";
+
+
+    document.getElementById(
+      "authSubtitle"
+    ).textContent =
       login
         ? "Hesabına giriş yap ve profilini yönet."
-        : "Kendi dijital alanını birkaç saniyede oluştur.";
+        : "Kendi dijital alanını oluştur.";
+
 
     error.textContent = "";
 
+
     if (login) {
+
       form.innerHTML = `
+
         <div class="input-group">
           <label>E-POSTA</label>
+
           <input
             name="email"
             type="email"
-            autocomplete="email"
-            required
-          >
+            required>
         </div>
 
         <div class="input-group">
           <label>ŞİFRE</label>
+
           <input
             name="password"
             type="password"
-            autocomplete="current-password"
-            required
-          >
+            required>
         </div>
 
         <button class="submit-button">
-          Giriş yap <span>→</span>
+          Giriş yap →
         </button>
 
-        <button type="button" class="forgot-button" id="forgot">
+        <button
+          type="button"
+          class="forgot-button"
+          id="forgot">
           Şifremi unuttum
         </button>
+
       `;
+
     } else {
+
       form.innerHTML = `
+
         <div class="input-group">
           <label>E-POSTA</label>
+
           <input
             name="email"
             type="email"
-            autocomplete="email"
-            required
-          >
+            required>
         </div>
 
         <div class="input-group">
           <label>KULLANICI ADI</label>
+
           <input
             name="username"
-            autocomplete="username"
             maxlength="24"
-            required
-          >
-          <small>3-24 karakter · harf, sayı ve _</small>
+            required>
+
+          <small>
+            3-24 karakter · harf, sayı, _
+          </small>
         </div>
 
         <div class="input-group">
           <label>ŞİFRE</label>
+
           <input
             name="password"
             type="password"
-            autocomplete="new-password"
             minlength="6"
-            required
-          >
+            required>
         </div>
 
         <div class="input-group">
           <label>ŞİFRE TEKRARI</label>
+
           <input
             name="passwordConfirm"
             type="password"
-            autocomplete="new-password"
             minlength="6"
-            required
-          >
+            required>
         </div>
 
         <button class="submit-button">
-          Hesap oluştur <span>→</span>
+          Hesap oluştur →
         </button>
+
       `;
     }
 
-    if (document.querySelector("#forgot")) {
-      document.querySelector("#forgot").onclick = resetPage;
+
+    const forgot =
+      document.getElementById(
+        "forgot"
+      );
+
+    if (forgot) {
+      forgot.onclick = resetPage;
     }
   }
 
-  document.querySelector("#loginTab").onclick = () => {
+
+  document.getElementById(
+    "backHome"
+  ).onclick = () => {
+
+    history.pushState(
+      {},
+      "",
+      "/"
+    );
+
+    home();
+  };
+
+
+  document.getElementById(
+    "loginTab"
+  ).onclick = () => {
+
     mode = "login";
     draw();
   };
 
-  document.querySelector("#registerTab").onclick = () => {
+
+  document.getElementById(
+    "registerTab"
+  ).onclick = () => {
+
     mode = "register";
     draw();
   };
 
-  form.onsubmit = async (e) => {
-    e.preventDefault();
 
-    error.textContent = "";
+  form.onsubmit =
+    async (event) => {
 
-    const body = Object.fromEntries(
-      new FormData(form).entries()
-    );
+      event.preventDefault();
 
-    try {
-      await api(
-        mode === "login"
-          ? "/api/login"
-          : "/api/register",
-        json("POST", body)
-      );
+      error.textContent = "";
 
-      location.href = "/";
-    } catch (e) {
-      error.className = "auth-error";
-      error.textContent = e.message;
-    }
-  };
+      const body =
+        Object.fromEntries(
+          new FormData(form)
+        );
+
+      try {
+
+        await api(
+          mode === "login"
+            ? "/api/login"
+            : "/api/register",
+          json(
+            "POST",
+            body
+          )
+        );
+
+        location.href = "/";
+
+      } catch (e) {
+
+        error.className =
+          "auth-error";
+
+        error.textContent =
+          e.message;
+      }
+    };
+
 
   draw();
 }
 
+
 /* =========================
-   PASSWORD RESET
+   RESET
 ========================= */
 
 function resetPage() {
+
   app.innerHTML = `
+
     <div class="auth-screen">
 
-      <button class="back-button" id="resetBack">
+      <button
+        class="back-button"
+        id="resetBack">
         ← Geri
       </button>
 
       <div class="auth-panel">
 
         <div class="auth-logo">
-          <span>A</span> AEVIX
+          <span>A</span>
+          AEVIX
         </div>
 
         <div class="auth-heading">
-          <div class="auth-eyebrow">PASSWORD RESET</div>
+          <span>PASSWORD RESET</span>
           <h1>Şifreni yenile.</h1>
           <p>
-            Hesabına bağlı e-posta adresini gir.
+            E-posta adresini gir.
           </p>
         </div>
 
@@ -460,303 +704,497 @@ function resetPage() {
 
           <div class="input-group">
             <label>E-POSTA</label>
-            <input id="resetEmail" type="email" required>
+
+            <input
+              id="resetEmail"
+              type="email"
+              required>
           </div>
 
           <button class="submit-button">
-            Kod gönder <span>→</span>
+            Kod gönder →
           </button>
 
         </form>
 
         <div id="resetError"></div>
+
         <div id="resetArea"></div>
 
       </div>
+
     </div>
   `;
 
-  document.querySelector("#resetBack").onclick = authPage;
 
-  document.querySelector("#resetForm").onsubmit = async (e) => {
-    e.preventDefault();
+  document.getElementById(
+    "resetBack"
+  ).onclick = authPage;
 
-    const email = document.querySelector("#resetEmail").value;
-    const error = document.querySelector("#resetError");
 
-    try {
-      const data = await api(
-        "/api/request-reset",
-        json("POST", { email })
-      );
+  document.getElementById(
+    "resetForm"
+  ).onsubmit =
+    async (event) => {
 
-      document.querySelector("#resetArea").innerHTML = `
-        <div class="reset-message">
-          ${esc(data.message)}
-        </div>
+      event.preventDefault();
 
-        <form id="finishReset">
+      const email =
+        document.getElementById(
+          "resetEmail"
+        ).value;
 
-          <div class="input-group">
-            <label>6 HANELİ KOD</label>
-            <input id="code" maxlength="6" inputmode="numeric" required>
-          </div>
+      try {
 
-          <div class="input-group">
-            <label>YENİ ŞİFRE</label>
-            <input id="newPassword" type="password" minlength="6" required>
-          </div>
-
-          <button class="submit-button">
-            Şifreyi değiştir <span>→</span>
-          </button>
-
-        </form>
-      `;
-
-      document.querySelector("#finishReset").onsubmit = async (ev) => {
-        ev.preventDefault();
-
-        try {
+        const result =
           await api(
-            "/api/reset-password",
-            json("POST", {
-              email,
-              code: document.querySelector("#code").value,
-              newPassword: document.querySelector("#newPassword").value
-            })
+            "/api/request-reset",
+            json(
+              "POST",
+              { email }
+            )
           );
 
-          alert("Şifren değiştirildi.");
-          authPage();
-        } catch (x) {
-          error.className = "auth-error";
-          error.textContent = x.message;
-        }
-      };
-    } catch (e) {
-      error.className = "auth-error";
-      error.textContent = e.message;
-    }
-  };
+
+        document.getElementById(
+          "resetArea"
+        ).innerHTML = `
+
+          <div class="reset-message">
+            ${esc(result.message)}
+          </div>
+
+          <form id="finishReset">
+
+            <div class="input-group">
+              <label>6 HANELİ KOD</label>
+
+              <input
+                id="resetCode"
+                maxlength="6"
+                required>
+            </div>
+
+            <div class="input-group">
+              <label>YENİ ŞİFRE</label>
+
+              <input
+                id="newPassword"
+                type="password"
+                minlength="6"
+                required>
+            </div>
+
+            <button class="submit-button">
+              Şifreyi değiştir →
+            </button>
+
+          </form>
+        `;
+
+
+        document.getElementById(
+          "finishReset"
+        ).onsubmit =
+          async (event) => {
+
+            event.preventDefault();
+
+            try {
+
+              await api(
+                "/api/reset-password",
+                json(
+                  "POST",
+                  {
+                    email,
+
+                    code:
+                      document.getElementById(
+                        "resetCode"
+                      ).value,
+
+                    newPassword:
+                      document.getElementById(
+                        "newPassword"
+                      ).value
+                  }
+                )
+              );
+
+              alert(
+                "Şifren değiştirildi."
+              );
+
+              authPage();
+
+            } catch (e) {
+
+              document.getElementById(
+                "resetError"
+              ).textContent =
+                e.message;
+            }
+          };
+      }
+    };
 }
+
 
 /* =========================
    DASHBOARD
 ========================= */
 
 async function dashboard() {
-  const data = await api("/api/me");
+
+  const data =
+    await api("/api/me");
+
 
   app.innerHTML = `
+
     <div class="dashboard">
 
       <header class="dashboard-header">
 
-        <div class="dashboard-brand">
+        <div>
+
           <div class="auth-logo">
-            <span>A</span> AEVIX
+            <span>A</span>
+            AEVIX
           </div>
 
           <div class="dashboard-user">
-            @${esc(data.user.username)}
+            @${esc(
+              data.user.username
+            )}
           </div>
+
         </div>
 
+
         <div class="dashboard-actions">
-          <button class="outline-button" id="viewPage">
+
+          <button
+            class="outline-button"
+            id="viewPage">
             Profilim ↗
           </button>
 
-          <button class="outline-button" id="logout">
+          <button
+            class="outline-button"
+            id="logout">
             Çıkış
           </button>
+
         </div>
 
       </header>
+
 
       <div class="dashboard-layout">
 
         <aside class="dashboard-sidebar">
 
-          <button class="dash-tab active" data-tab="settings">
-            <span>◈</span>
-            Profil
+          <button
+            class="dash-tab active"
+            data-tab="settings">
+            ◈ Profil
           </button>
 
-          <button class="dash-tab" data-tab="links">
-            <span>↗</span>
-            Linkler
+          <button
+            class="dash-tab"
+            data-tab="links">
+            ↗ Linkler
           </button>
 
-          <button class="dash-tab" data-tab="page">
-            <span>◎</span>
-            Sayfam
+          <button
+            class="dash-tab"
+            data-tab="page">
+            ◎ Sayfam
           </button>
 
         </aside>
 
-        <main id="dashboardContent"></main>
+
+        <main
+          id="dashboardContent">
+        </main>
 
       </div>
 
     </div>
   `;
 
-  document.querySelector("#logout").onclick = async () => {
-    await api("/api/logout", { method: "POST" });
-    location.href = "/";
-  };
 
-  document.querySelector("#viewPage").onclick = () => {
-    location.href =
-      "/" + encodeURIComponent(data.user.username);
-  };
+  document.getElementById(
+    "logout"
+  ).onclick =
+    async () => {
 
-  document.querySelectorAll(".dash-tab").forEach((button) => {
-    button.onclick = () => {
-      showTab(button.dataset.tab, button, data);
+      await api(
+        "/api/logout",
+        {
+          method: "POST"
+        }
+      );
+
+      location.href = "/";
     };
-  });
+
+
+  document.getElementById(
+    "viewPage"
+  ).onclick =
+    () => {
+
+      location.href =
+        "/" +
+        encodeURIComponent(
+          data.user.username
+        );
+    };
+
+
+  document
+    .querySelectorAll(".dash-tab")
+    .forEach(
+      (button) => {
+
+        button.onclick = () => {
+
+          showTab(
+            button.dataset.tab,
+            button,
+            data
+          );
+        };
+      }
+    );
+
 
   showTab(
     "settings",
-    document.querySelector('[data-tab="settings"]'),
+    document.querySelector(
+      '[data-tab="settings"]'
+    ),
     data
   );
 }
 
-function showTab(tab, button, data) {
-  document.querySelectorAll(".dash-tab")
-    .forEach((x) => x.classList.remove("active"));
 
-  button.classList.add("active");
+function showTab(
+  tab,
+  button,
+  data
+) {
+
+  document
+    .querySelectorAll(
+      ".dash-tab"
+    )
+    .forEach(
+      (item) =>
+        item.classList.remove(
+          "active"
+        )
+    );
+
+  button.classList.add(
+    "active"
+  );
+
 
   const content =
-    document.querySelector("#dashboardContent");
+    document.getElementById(
+      "dashboardContent"
+    );
 
-  if (tab === "settings") settingsTab(content, data);
-  if (tab === "links") linksTab(content, data);
-  if (tab === "page") pageTab(content, data);
+
+  if (tab === "settings") {
+    settingsTab(
+      content,
+      data
+    );
+  }
+
+  if (tab === "links") {
+    linksTab(
+      content,
+      data
+    );
+  }
+
+  if (tab === "page") {
+    pageTab(
+      content,
+      data
+    );
+  }
 }
+
 
 /* =========================
    SETTINGS
 ========================= */
 
-function settingsTab(content, data) {
+function settingsTab(
+  content,
+  data
+) {
+
   content.innerHTML = `
+
     <div class="dashboard-card">
 
       <div class="card-heading">
-        <div>
-          <span>PROFILE</span>
-          <h2>Profilini düzenle</h2>
-        </div>
+        <span>PROFILE</span>
+        <h2>Profilini düzenle</h2>
       </div>
+
 
       <div class="input-group">
+
         <label>BİYOGRAFİ</label>
-        <textarea id="description" rows="4">${esc(
-          data.user.description
-        )}</textarea>
+
+        <textarea
+          id="description"
+          rows="4">${esc(
+            data.user.description
+          )}</textarea>
+
       </div>
 
+
       <div class="theme-row">
+
         <div>
           <label>TEMA RENGİ</label>
-          <p>Profilindeki vurgu rengini seç.</p>
+          <p>
+            Profilinin vurgu rengini seç.
+          </p>
         </div>
 
         <input
           id="theme"
-          class="color-input"
           type="color"
-          value="${data.user.theme_color}"
-        >
+          value="${
+            data.user.theme_color
+          }">
 
         <span id="hexColor">
           ${data.user.theme_color}
         </span>
+
       </div>
 
-      <button class="submit-button small-submit" id="saveProfile">
-        Değişiklikleri kaydet <span>→</span>
+
+      <button
+        class="submit-button"
+        id="saveProfile">
+        Kaydet →
       </button>
+
 
       <div class="divider"></div>
 
+
       <div class="card-heading">
-        <div>
-          <span>MEDIA</span>
-          <h2>Medyan</h2>
-        </div>
+        <span>MEDIA</span>
+        <h2>Medya</h2>
       </div>
+
 
       ${uploadBox(
         "background",
         "Profil arka planı",
-        "Fotoğraf veya video yükle."
+        "Resim veya hareketli video."
       )}
 
-      ${uploadBox(
-        "audio",
-        "Profil müziği",
-        "MP3, WAV veya desteklenen ses dosyası."
-      )}
 
       ${uploadBox(
         "avatar",
         "Avatar",
-        "Profil fotoğrafını değiştir."
+        "Resim veya hareketli video avatar."
       )}
+
+
+      ${uploadBox(
+        "audio",
+        "Profil müziği",
+        "MP3, WAV vb."
+      )}
+
 
       <div class="divider"></div>
 
+
       <div class="card-heading">
-        <div>
-          <span>BADGES</span>
-          <h2>Rozetler</h2>
-        </div>
+        <span>BADGES</span>
+        <h2>Rozetler</h2>
       </div>
 
+
       <div class="badges-area">
+
         ${
           data.badges.length
-            ? data.badges.map(b => `
-              <span class="badge"
-                style="--badge:${b.color}">
-                <i></i>
-                ${esc(b.name)}
+            ? data.badges
+                .map(
+                  (badge) => `
+
+              <span
+                class="badge"
+                style="--badge:${badge.color}">
+
+                ${esc(
+                  badge.name
+                )}
+
                 ${
-                  b.equipped
+                  badge.equipped
                     ? " ✓"
-                    : `<button data-equip="${b.id}">kuşan</button>`
+                    : `
+                      <button
+                        data-equip="${badge.id}">
+                        kuşan
+                      </button>
+                    `
                 }
+
               </span>
-            `).join("")
-            : `<span class="muted">
-                Henüz rozet oluşturmadın.
-              </span>`
+
+            `
+                )
+                .join("")
+
+            : `
+              <span class="muted">
+                Henüz rozet yok.
+              </span>
+            `
         }
+
       </div>
+
 
       <div class="badge-create">
 
         <input
           id="badgeName"
-          placeholder="Rozet adı"
           maxlength="20"
-        >
+          placeholder="Rozet adı">
 
         <input
           id="badgeColor"
-          class="color-input"
           type="color"
-          value="${data.user.theme_color}"
-        >
+          value="${
+            data.user.theme_color
+          }">
 
-        <button class="outline-button" id="addBadge">
+        <button
+          class="outline-button"
+          id="addBadge">
           + Oluştur
         </button>
 
@@ -765,221 +1203,347 @@ function settingsTab(content, data) {
     </div>
   `;
 
-  document.querySelector("#theme").oninput = (e) => {
-    document.documentElement.style.setProperty(
-      "--accent",
-      e.target.value
+
+  document.getElementById(
+    "theme"
+  ).oninput =
+    (event) => {
+
+      document.documentElement
+        .style
+        .setProperty(
+          "--accent",
+          event.target.value
+        );
+
+      document.getElementById(
+        "hexColor"
+      ).textContent =
+        event.target.value;
+    };
+
+
+  document.getElementById(
+    "saveProfile"
+  ).onclick =
+    async () => {
+
+      try {
+
+        await api(
+          "/api/profile",
+          json(
+            "POST",
+            {
+              description:
+                document.getElementById(
+                  "description"
+                ).value,
+
+              themeColor:
+                document.getElementById(
+                  "theme"
+                ).value
+            }
+          )
+        );
+
+        alert(
+          "Profil kaydedildi."
+        );
+
+      } catch (e) {
+
+        alert(e.message);
+      }
+    };
+
+
+  document
+    .querySelectorAll(
+      "[data-equip]"
+    )
+    .forEach(
+      (button) => {
+
+        button.onclick =
+          async () => {
+
+            await api(
+              `/api/badges/${button.dataset.equip}/equip`,
+              {
+                method: "POST"
+              }
+            );
+
+            dashboard();
+          };
+      }
     );
 
-    document.querySelector("#hexColor")
-      .textContent = e.target.value;
-  };
 
-  document.querySelector("#saveProfile").onclick = async () => {
-    try {
-      await api(
-        "/api/profile",
-        json("POST", {
-          description:
-            document.querySelector("#description").value,
-          themeColor:
-            document.querySelector("#theme").value
-        })
-      );
+  document.getElementById(
+    "addBadge"
+  ).onclick =
+    async () => {
 
-      alert("Profil kaydedildi.");
-    } catch (e) {
-      alert(e.message);
-    }
-  };
+      try {
 
-  document.querySelectorAll("[data-equip]")
-    .forEach((button) => {
-      button.onclick = async () => {
         await api(
-          "/api/badges/" + button.dataset.equip + "/equip",
-          { method: "POST" }
+          "/api/badges",
+          json(
+            "POST",
+            {
+              name:
+                document.getElementById(
+                  "badgeName"
+                ).value,
+
+              color:
+                document.getElementById(
+                  "badgeColor"
+                ).value
+            }
+          )
         );
 
         dashboard();
-      };
-    });
 
-  document.querySelector("#addBadge").onclick = async () => {
-    try {
-      await api(
-        "/api/badges",
-        json("POST", {
-          name: document.querySelector("#badgeName").value,
-          color: document.querySelector("#badgeColor").value
-        })
-      );
+      } catch (e) {
 
-      dashboard();
-    } catch (e) {
-      alert(e.message);
-    }
-  };
+        alert(e.message);
+      }
+    };
 
-  document.querySelectorAll(".upload-input")
-    .forEach((input) => {
-      input.onchange = async () => {
-        if (!input.files[0]) return;
 
-        const form = new FormData();
-        form.append("file", input.files[0]);
-        form.append("type", input.dataset.type);
+  document
+    .querySelectorAll(
+      ".upload-input"
+    )
+    .forEach(
+      (input) => {
 
-        try {
-          await api("/api/upload", {
-            method: "POST",
-            body: form
-          });
+        input.onchange =
+          async () => {
 
-          alert("Dosya yüklendi.");
-          dashboard();
-        } catch (e) {
-          alert(e.message);
-        }
-      };
-    });
+            const file =
+              input.files[0];
+
+            if (!file) {
+              return;
+            }
+
+            const formData =
+              new FormData();
+
+            formData.append(
+              "file",
+              file
+            );
+
+            formData.append(
+              "type",
+              input.dataset.type
+            );
+
+            try {
+
+              await api(
+                "/api/upload",
+                {
+                  method: "POST",
+                  body: formData
+                }
+              );
+
+              alert(
+                "Dosya başarıyla yüklendi."
+              );
+
+              dashboard();
+
+            } catch (e) {
+
+              alert(e.message);
+            }
+          };
+      }
+    );
 }
 
-function uploadBox(type, title, description) {
+
+function uploadBox(
+  type,
+  title,
+  description
+) {
+
   const accept =
     type === "audio"
       ? "audio/*"
       : "image/*,video/*";
 
+
   return `
+
     <div class="upload-box">
 
       <div>
-        <strong>${title}</strong>
-        <p>${description}</p>
+
+        <strong>
+          ${title}
+        </strong>
+
+        <p>
+          ${description}
+        </p>
+
       </div>
 
       <label class="upload-button">
+
         Dosya seç
+
         <input
           class="upload-input"
           data-type="${type}"
           type="file"
-          accept="${accept}"
-        >
-        <span class="upload-check">✓</span>
+          accept="${accept}">
+
       </label>
 
     </div>
   `;
 }
 
-  return `
-    <div class="upload-box">
-
-      <div>
-        <strong>${title}</strong>
-        <p>${description}</p>
-      </div>
-
-      <label class="upload-button">
-        Dosya seç
-        <input
-          class="upload-input"
-          data-type="${type}"
-          type="file"
-          accept="${accept}"
-        >
-      </label>
-
-    </div>
-  `;
-}
 
 /* =========================
    LINKS
 ========================= */
 
-function linksTab(content, data) {
+function linksTab(
+  content,
+  data
+) {
+
   content.innerHTML = `
+
     <div class="dashboard-card">
 
       <div class="card-heading">
-        <div>
-          <span>LINKS</span>
-          <h2>Bağlantıların</h2>
-        </div>
+        <span>LINKS</span>
+        <h2>Bağlantıların</h2>
       </div>
+
 
       <div class="preset-row">
-        ${[
-          "Discord",
-          "Instagram",
-          "Spotify",
-          "Kick",
-          "Twitch",
-          "YouTube",
-          "Steam"
-        ].map(name => `
-          <button
-            class="preset-button"
-            data-name="${name}">
-            + ${name}
-          </button>
-        `).join("")}
+
+        ${
+          [
+            "Discord",
+            "Instagram",
+            "Spotify",
+            "YouTube",
+            "Twitch",
+            "Steam",
+            "Kick"
+          ]
+            .map(
+              (name) => `
+
+              <button
+                class="preset-button"
+                data-name="${name}">
+                + ${name}
+              </button>
+
+            `
+            )
+            .join("")
+        }
+
       </div>
 
+
       <div class="input-group">
+
         <label>BAĞLANTI ADI</label>
+
         <input
           id="linkName"
-          placeholder="Örn. Discord sunucum"
-        >
+          placeholder="Discord">
+
       </div>
 
+
       <div class="input-group">
+
         <label>URL</label>
+
         <input
           id="linkUrl"
           type="url"
-          placeholder="https://..."
-        >
+          placeholder="https://...">
+
       </div>
+
 
       <div class="input-group">
-        <label>İKON URL — OPSİYONEL</label>
+
+        <label>İKON URL</label>
+
         <input
           id="linkIcon"
-          type="url"
-          placeholder="https://..."
-        >
+          placeholder="Opsiyonel">
+
       </div>
 
-      <button class="submit-button small-submit" id="addLink">
-        Bağlantı ekle <span>→</span>
+
+      <button
+        class="submit-button"
+        id="addLink">
+        Bağlantı ekle →
       </button>
+
 
       <div class="saved-links">
 
         ${
           data.links.length
-            ? data.links.map(link => `
-              <div class="saved-link">
 
-                <a
-                  href="${esc(link.url)}"
-                  target="_blank"
-                  rel="noopener">
-                  ${esc(link.name)}
-                </a>
+            ? data.links
+                .map(
+                  (link) => `
 
-                <button data-delete="${link.id}">
-                  Sil
-                </button>
+                <div class="saved-link">
 
-              </div>
-            `).join("")
-            : `<p class="muted">Henüz bağlantı eklemedin.</p>`
+                  <a
+                    href="${esc(
+                      link.url
+                    )}"
+                    target="_blank"
+                    rel="noopener">
+                    ${esc(
+                      link.name
+                    )}
+                  </a>
+
+                  <button
+                    data-delete="${link.id}">
+                    Sil
+                  </button>
+
+                </div>
+
+              `
+                )
+                .join("")
+
+            : `
+              <p class="muted">
+                Henüz bağlantı yok.
+              </p>
+            `
         }
 
       </div>
@@ -987,219 +1551,365 @@ function linksTab(content, data) {
     </div>
   `;
 
-  document.querySelectorAll(".preset-button")
-    .forEach(button => {
-      button.onclick = () => {
-        document.querySelector("#linkName").value =
-          button.dataset.name;
-      };
-    });
 
-  document.querySelector("#addLink").onclick = async () => {
-    try {
-      await api(
-        "/api/links",
-        json("POST", {
-          name: document.querySelector("#linkName").value,
-          url: document.querySelector("#linkUrl").value,
-          iconUrl: document.querySelector("#linkIcon").value
-        })
-      );
+  document
+    .querySelectorAll(
+      ".preset-button"
+    )
+    .forEach(
+      (button) => {
 
-      dashboard();
-    } catch (e) {
-      alert(e.message);
-    }
-  };
+        button.onclick =
+          () => {
 
-  document.querySelectorAll("[data-delete]")
-    .forEach(button => {
-      button.onclick = async () => {
+            document.getElementById(
+              "linkName"
+            ).value =
+              button.dataset.name;
+          };
+      }
+    );
+
+
+  document.getElementById(
+    "addLink"
+  ).onclick =
+    async () => {
+
+      try {
+
         await api(
-          "/api/links/" + button.dataset.delete,
-          { method: "DELETE" }
+          "/api/links",
+          json(
+            "POST",
+            {
+              name:
+                document.getElementById(
+                  "linkName"
+                ).value,
+
+              url:
+                document.getElementById(
+                  "linkUrl"
+                ).value,
+
+              iconUrl:
+                document.getElementById(
+                  "linkIcon"
+                ).value
+            }
+          )
         );
 
         dashboard();
-      };
-    });
+
+      } catch (e) {
+
+        alert(e.message);
+      }
+    };
+
+
+  document
+    .querySelectorAll(
+      "[data-delete]"
+    )
+    .forEach(
+      (button) => {
+
+        button.onclick =
+          async () => {
+
+            await api(
+              `/api/links/${button.dataset.delete}`,
+              {
+                method: "DELETE"
+              }
+            );
+
+            dashboard();
+          };
+      }
+    );
 }
+
 
 /* =========================
    PAGE
 ========================= */
 
-function pageTab(content, data) {
+function pageTab(
+  content,
+  data
+) {
+
   const url =
     location.origin +
     "/" +
-    encodeURIComponent(data.user.username);
+    encodeURIComponent(
+      data.user.username
+    );
+
 
   content.innerHTML = `
+
     <div class="dashboard-card">
 
       <div class="card-heading">
-        <div>
-          <span>YOUR PAGE</span>
-          <h2>Profil adresin</h2>
-        </div>
+        <span>YOUR PAGE</span>
+        <h2>Profil adresin</h2>
       </div>
 
       <p class="muted">
-        Bu bağlantıyı arkadaşlarınla paylaşabilirsin.
+        Profilini paylaşmak için:
       </p>
 
       <div class="page-url">
-        <input readonly value="${url}">
-        <button class="outline-button" id="openProfile">
+
+        <input
+          readonly
+          value="${esc(url)}">
+
+        <button
+          class="outline-button"
+          id="openProfile">
           Aç ↗
         </button>
+
       </div>
 
     </div>
   `;
 
-  document.querySelector("#openProfile").onclick =
-    () => location.href = url;
+
+  document.getElementById(
+    "openProfile"
+  ).onclick =
+    () => {
+      location.href = url;
+    };
 }
+
 
 /* =========================
    PUBLIC PROFILE
 ========================= */
 
-async function profilePage(username) {
+async function profilePage(
+  username
+) {
+
   try {
-    const p = await api(
-      "/api/profile/" + encodeURIComponent(username)
+
+    const profile =
+      await api(
+        "/api/profile/" +
+        encodeURIComponent(
+          username
+        )
+      );
+
+
+    document.documentElement
+      .style
+      .setProperty(
+        "--accent",
+        profile.themeColor ||
+          "#9b7cff"
+      );
+
+
+    setBackground(
+      profile.backgroundUrl,
+      profile.backgroundType
     );
 
-    document.documentElement.style.setProperty(
-      "--accent",
-      p.themeColor || "#8b5cf6"
-    );
 
-    setBackground({
-      url: p.backgroundUrl,
-      type: p.backgroundType
-    });
+    const avatar =
+      profile.avatarUrl
+        ? profile.avatarType ===
+          "video"
+
+          ? `
+            <video
+              class="public-avatar video-avatar"
+              src="${esc(
+                profile.avatarUrl
+              )}"
+              autoplay
+              muted
+              loop
+              playsinline
+              webkit-playsinline
+              preload="auto">
+            </video>
+          `
+
+          : `
+            <img
+              class="public-avatar"
+              src="${esc(
+                profile.avatarUrl
+              )}"
+              alt="">
+          `
+
+        : `
+          <div class="public-avatar">
+            ${esc(
+              (
+                profile.username[0] ||
+                "A"
+              ).toUpperCase()
+            )}
+          </div>
+        `;
+
 
     app.innerHTML = `
+
       <main class="public-profile">
 
         <div class="public-card">
 
-          <div class="public-header">
+          ${avatar}
 
-            ${
-              p.avatarUrl
-                ? p.avatarType === "video"
-                  ? `
-                    <video
-                      class="public-avatar"
-                      src="${esc(p.avatarUrl)}"
-                      autoplay
-                      muted
-                      loop
-                      playsinline>
-                    </video>
-                  `
-                  : `
-                    <img
-                      class="public-avatar"
-                      src="${esc(p.avatarUrl)}">
-                  `
-                : `
-                  <div class="public-avatar">
-                    ${esc(p.username[0]?.toUpperCase() || "A")}
-                  </div>
-                `
-            }
 
-            <div class="public-info">
-              <div class="public-username">
-                @${esc(p.username)}
-              </div>
-
-              <p>
-                ${esc(p.description)}
-              </p>
-            </div>
-
+          <div class="public-username">
+            @${esc(
+              profile.username
+            )}
           </div>
 
+
+          <p class="public-description">
+            ${esc(
+              profile.description
+            )}
+          </p>
+
+
           ${
-            p.badges.filter(b => b.equipped).length
+            profile.badges.some(
+              (badge) =>
+                badge.equipped
+            )
+
               ? `
                 <div class="public-badges">
-                  ${p.badges
-                    .filter(b => b.equipped)
-                    .map(b => `
-                      <span style="--badge:${b.color}">
-                        <i></i>
-                        ${esc(b.name)}
-                      </span>
-                    `).join("")
+
+                  ${
+                    profile.badges
+                      .filter(
+                        (badge) =>
+                          badge.equipped
+                      )
+                      .map(
+                        (badge) => `
+
+                        <span
+                          style="--badge:${badge.color}">
+                          ${esc(
+                            badge.name
+                          )}
+                        </span>
+
+                      `
+                      )
+                      .join("")
                   }
+
                 </div>
               `
+
               : ""
           }
 
+
           ${
-            p.audioUrl
+            profile.audioUrl
+
               ? `
-                <div class="audio-control">
-                  <span>♪</span>
-                  <input
-                    id="volume"
-                    type="range"
-                    min="0"
-                    max="100"
-                    value="45">
-                  <span>music</span>
+                <div class="music-box">
+
+                  <button
+                    id="musicButton">
+                    ▶
+                  </button>
+
+                  <span>
+                    Profile music
+                  </span>
+
                 </div>
               `
+
               : ""
           }
+
 
           <div class="public-links">
 
             ${
-              p.links.length
-                ? p.links.map(link => `
-                  <a
-                    href="${esc(link.url)}"
-                    target="_blank"
-                    rel="noopener"
-                    class="public-link">
+              profile.links.length
 
-                    ${
-                      link.icon_url
-                        ? `
-                          <img src="${esc(link.icon_url)}">
-                        `
-                        : `
-                          <span class="link-icon">↗</span>
-                        `
-                    }
+                ? profile.links
+                    .map(
+                      (link) => `
 
-                    <span>${esc(link.name)}</span>
+                      <a
+                        class="public-link"
+                        href="${esc(
+                          link.url
+                        )}"
+                        target="_blank"
+                        rel="noopener">
 
-                    <b>↗</b>
-                  </a>
-                `).join("")
+                        ${
+                          link.icon_url
+
+                            ? `
+                              <img
+                                src="${esc(
+                                  link.icon_url
+                                )}">
+                            `
+
+                            : `
+                              <span>
+                                ↗
+                              </span>
+                            `
+                        }
+
+                        <strong>
+                          ${esc(
+                            link.name
+                          )}
+                        </strong>
+
+                        <b>
+                          ↗
+                        </b>
+
+                      </a>
+
+                    `
+                    )
+                    .join("")
+
                 : `
                   <div class="empty-public">
-                    Bu profil henüz bağlantı eklememiş.
+                    Henüz bağlantı eklenmemiş.
                   </div>
                 `
             }
 
           </div>
 
+
           <div class="public-footer">
-            <span>AEVIX</span>
-            <span>digital identity</span>
+            AEVIX
           </div>
 
         </div>
@@ -1207,41 +1917,99 @@ async function profilePage(username) {
       </main>
     `;
 
-    if (p.audioUrl) {
-      const audio = new Audio(p.audioUrl);
-      audio.loop = true;
-      audio.volume = 0.45;
 
-      const volume = document.querySelector("#volume");
+    /* VIDEO AVATAR */
 
-      volume.oninput = () => {
-        audio.volume =
-          Number(volume.value) / 100;
-      };
+    const avatarVideo =
+      document.querySelector(
+        ".video-avatar"
+      );
 
-      const start = () => {
-        audio.play().catch(() => {});
-      };
+    if (avatarVideo) {
+
+      avatarVideo.muted = true;
+      avatarVideo.playsInline = true;
+
+      avatarVideo.play().catch(() => {});
 
       document.addEventListener(
-        "click",
-        start,
-        { once: true }
+        "touchstart",
+        () => {
+          avatarVideo
+            .play()
+            .catch(() => {});
+        },
+        {
+          once: true,
+          passive: true
+        }
       );
     }
 
+
+    /* MUSIC */
+
+    if (profile.audioUrl) {
+
+      const audio =
+        new Audio(
+          profile.audioUrl
+        );
+
+      audio.loop = true;
+      audio.volume = 0.45;
+
+      const button =
+        document.getElementById(
+          "musicButton"
+        );
+
+      button.onclick =
+        async () => {
+
+          if (
+            audio.paused
+          ) {
+
+            await audio
+              .play();
+
+            button.textContent =
+              "Ⅱ";
+
+          } else {
+
+            audio.pause();
+
+            button.textContent =
+              "▶";
+          }
+        };
+    }
+
+
   } catch {
-    setBackground(null);
+
+    setBackground(
+      null,
+      null
+    );
 
     app.innerHTML = `
+
       <div class="not-found">
 
-        <div class="not-found-code">404</div>
+        <div class="not-found-code">
+          404
+        </div>
 
-        <h1>Profil bulunamadı.</h1>
+        <h1>
+          Profil bulunamadı.
+        </h1>
 
         <p>
-          @${esc(username)} adına kayıtlı bir AEVIX profili yok.
+          @${esc(username)}
+          adına kayıtlı bir AEVIX profili yok.
         </p>
 
         <button
@@ -1255,6 +2023,11 @@ async function profilePage(username) {
   }
 }
 
-window.addEventListener("popstate", route);
+
+window.addEventListener(
+  "popstate",
+  route
+);
+
 
 route();
