@@ -1,3 +1,17 @@
+#app {
+  filter: none !important;
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+.home,
+.auth-screen,
+.dashboard,
+.public-profile,
+.not-found {
+  filter: none !important;
+  opacity: 1 !important;
+}
 :root {
   --accent: #9b7cff;
   --bg: #07060b;
