@@ -113,35 +113,32 @@ function setBackground(
 ========================= */
 
 async function route() {
+  const path = location.pathname;
 
-  const path =
-    location.pathname;
+  if (path === "/" || path === "") {
+    home();
 
-  if (
-    path === "/" ||
-    path === ""
-  ) {
-
+    // Giriş yapılmışsa dashboard'a geç
     try {
+      const response = await fetch("/api/me", {
+        credentials: "same-origin"
+      });
 
-      await api("/api/me");
-
-      dashboard();
-
-    } catch {
-
-      home();
+      if (response.ok) {
+        dashboard();
+      }
+    } catch (error) {
+      console.log("Oturum kontrolü:", error);
     }
 
     return;
   }
 
-  const username =
-    decodeURIComponent(
-      path.startsWith("/p/")
-        ? path.slice(3)
-        : path.slice(1)
-    );
+  const username = decodeURIComponent(
+    path.startsWith("/p/")
+      ? path.slice(3)
+      : path.slice(1)
+  );
 
   profilePage(username);
 }
