@@ -7,14 +7,30 @@ const nodemailer = require("nodemailer");
 const crypto = require("crypto");
 const path = require("path");
 const fs = require("fs");
+const os = require("os");
 
 const app = express();
 const PORT = Number(process.env.PORT || 3000);
 const ROOT = __dirname;
 const PUBLIC = path.join(ROOT, "public");
-const UPLOADS = path.join(ROOT, "uploads");
-
+const UPLOADS = path.join(os.tmpdir(), "aevix-uploads");
 fs.mkdirSync(UPLOADS, { recursive: true });
+
+const SUPABASE_URL = String(process.env.SUPABASE_URL || "").replace(/\/+$/, "");
+const SUPABASE_KEY =
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||
+  process.env.SUPABASE_SERVICE_KEY ||
+  process.env.SUPABASE_KEY ||
+  "";
+
+const SUPABASE_BUCKET =
+  process.env.SUPABASE_BUCKET ||
+  process.env.STORAGE_BUCKET ||
+  "aevix-media";
+
+if (!SUPABASE_URL || !SUPABASE_KEY) {
+  console.error("Supabase Storage environment variables are missing.");
+}
 
 if (!process.env.DATABASE_URL) {
   console.error("DATABASE_URL is missing.");
@@ -298,14 +314,161 @@ const upload = multer({
       file.mimetype.startsWith("image/") ||
       file.mimetype.startsWith("video/") ||
       file.mimetype.startsWith("audio/")
-    ) return cb(null, true);
+    ) {
+      return cb(null, true);
+    }
+
     cb(new Error("Sadece resim, video veya ses dosyası yükleyebilirsin."));
   }
 });
 
+async function ensureSupabaseBucket() {
+  if (!SUPABASE_URL || !SUPABASE_KEY) {
+    throw new Error("Supabase Storage ayarları eksik.");
+  }
+
+  const headers = {
+    Authorization: `Bearer ${SUPABASE_KEY}`,
+    apikey: SUPABASE_KEY
+  };
+
+  const check = await fetch(
+    `${SUPABASE_URL}/storage/v1/bucket/${encodeURIComponent(SUPABASE_BUCKET)}`,
+    { headers }
+  );
+
+  if (check.ok) return;
+
+  const create = await fetch(`${SUPABASE_URL}/storage/v1/bucket`, {
+    method: "POST",
+    headers: {
+      ...headers,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      id: SUPABASE_BUCKET,
+      name: SUPABASE_BUCKET,
+      public: true
+    })
+  });
+
+  if (!create.ok && create.status !== 409) {
+    const text = await create.text();
+    throw new Error(`Supabase bucket oluşturulamadı: ${text}`);
+  }
+}
+
+async function uploadToSupabase(filePath, fileName, mimeType) {
+  await ensureSupabaseBucket();
+
+  const fileBuffer = await fs.promises.readFile(filePath);
+
+  const response = await fetch(
+    `${SUPABASE_URL}/storage/v1/object/${encodeURIComponent(SUPABASE_BUCKET)}/${fileName}`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${SUPABASE_KEY}`,
+        apikey: SUPABASE_KEY,
+        "Content-Type": mimeType,
+        "x-upsert": "true"
+      },
+      body: fileBuffer
+    }
+  );
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`Supabase upload hatası: ${text}`);
+  }
+
+  return `${SUPABASE_URL}/storage/v1/object/public/${encodeURIComponent(
+    SUPABASE_BUCKET
+  )}/${fileName}`;
+}
+
 app.post("/api/upload", auth, upload.single("file"), async (req, res) => {
   try {
-    if (!req.file) return res.status(400).json({ error: "Dosya seçmedin." });
+    if (!req.file) {
+      return res.status(400).json({ error: "Dosya seçmedin." });
+    }
+
+    const type = String(req.body.type || "");
+
+    if (!["background", "avatar", "audio"].includes(type)) {
+      fs.rmSync(req.file.path, { force: true });
+      return res.status(400).json({ error: "Geçersiz medya türü." });
+    }
+
+    const isVideo = req.file.mimetype.startsWith("video/");
+    const isAudio = req.file.mimetype.startsWith("audio/");
+
+    if (type === "audio" && !isAudio) {
+      fs.rmSync(req.file.path, { force: true });
+      return res.status(400).json({
+        error: "Müzik alanına sadece ses dosyası yükleyebilirsin."
+      });
+    }
+
+    const folder =
+      type === "background"
+        ? "backgrounds"
+        : type === "avatar"
+        ? "avatars"
+        : "audio";
+
+    const fileName =
+      `${folder}/` +
+      req.session.userId +
+      "-" +
+      crypto.randomBytes(16).toString("hex") +
+      path.extname(req.file.originalname).toLowerCase();
+
+    const publicUrl = await uploadToSupabase(
+      req.file.path,
+      fileName,
+      req.file.mimetype
+    );
+
+    if (type === "background") {
+      await query(
+        "UPDATE users SET background_url=$1,background_type=$2 WHERE id=$3",
+        [publicUrl, isVideo ? "video" : "image", req.session.userId]
+      );
+    }
+
+    if (type === "avatar") {
+      await query(
+        "UPDATE users SET avatar_url=$1,avatar_type=$2 WHERE id=$3",
+        [publicUrl, isVideo ? "video" : "image", req.session.userId]
+      );
+    }
+
+    if (type === "audio") {
+      await query(
+        "UPDATE users SET audio_url=$1 WHERE id=$2",
+        [publicUrl, req.session.userId]
+      );
+    }
+
+    fs.rmSync(req.file.path, { force: true });
+
+    res.json({
+      ok: true,
+      url: publicUrl
+    });
+  } catch (e) {
+    console.error("UPLOAD", e);
+
+    if (req.file) {
+      fs.rmSync(req.file.path, { force: true });
+    }
+
+    res.status(400).json({
+      error: e.message || "Dosya yüklenemedi."
+    });
+  }
+});
 
     const type = String(req.body.type || "");
     if (!["background", "avatar", "audio"].includes(type)) {
